@@ -24,7 +24,7 @@ class _Field(object):
     """
     Base class for model fields, which correspond to table columns.
     """
-    def __init__(self, primary=False):
+    def __init__(self, name=None, primary=False):
         """
         Initializer for field.
 
@@ -32,7 +32,7 @@ class _Field(object):
         :param primary: whether this is a primary key or not
         :return: None
         """
-        self.name = None  # This will be set later by _ModelMeta's __new__ method
+        self.name = name  # This will be set later by _ModelMeta's __new__ method
         self.primary = primary
         self.clazz = None
 
@@ -111,12 +111,7 @@ class _ModelMeta(type):
 
         """
 
-        # This if aborts our special logic if no __table__ is defined on the class.
-        # The assumption is that if __table__ is not defined, we are currently calling
-        # __new__ on the Model class, not one of its subclasses.  The easiest way to
-        # understand what is going on is to comment this statement out and seeing what
-        # happens: you should get an assertion error.
-        if '__table__' not in dict:
+        if name == "Model":
             return super(_ModelMeta, cls).__new__(cls, name, bases, dict)
 
         # Gather fields and determine the primary key and set the name of all fields
@@ -219,12 +214,11 @@ class Model(object, metaclass=_ModelMeta):
         # Make sure that they attribute we are searching on is actually defined on this model.
         assert len(kwargs) == 1
         k, v = [(k, v) for k, v in kwargs.items()][0]
-        f = _Field(k)
+        f = _Field(name=k)
         assert f in cls._fields
 
         flist = ",".join(str(f.name) for f in cls._fields)
         sql = SELECT_TEMPLATE.format(flist=flist, table=cls.__table__, column=k)
-        print(sql)
         cursor = _db.cursor()
         cursor.execute(sql, [v])
         results = []
