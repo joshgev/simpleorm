@@ -24,7 +24,7 @@ class _Field(object):
     """
     Base class for model fields, which correspond to table columns.
     """
-    def __init__(self, name, primary=False):
+    def __init__(self, primary=False):
         """
         Initializer for field.
 
@@ -32,7 +32,7 @@ class _Field(object):
         :param primary: whether this is a primary key or not
         :return: None
         """
-        self.name = name
+        self.name = None  # This will be set later by _ModelMeta's __new__ method
         self.primary = primary
         self.clazz = None
 
@@ -44,6 +44,9 @@ class _Field(object):
         :return: a string
         """
         raise NotImplemented()
+
+    def set_name(self, name):
+        self.name = name
 
     def __hash__(self):
         return hash(self.name)
@@ -113,8 +116,13 @@ class _ModelMeta(type):
         if '__table__' not in dict:
             return super(_ModelMeta, cls).__new__(cls, name, bases, dict)
 
-        # Gather fields and determine the primary key
-        fields = [v for k, v in dict.items() if isinstance(v, _Field)]
+        # Gather fields and determine the primary key and set the name of all fields
+        fields = []
+        for k, v in dict.items():
+            if isinstance(v, _Field):
+                v.set_name(k)
+                fields.append(v)
+        # Set the primary key
         primary = [f for f in fields if f.primary]
 
         # There should only be one primary key
@@ -223,7 +231,10 @@ class Model(object, metaclass=_ModelMeta):
 
     @classmethod
     def get_one(cls, **kwargs):
-        return cls._get(**kwargs)[0]
+        results = cls._get(**kwargs)
+        if len(results) > 0:
+            return results[0]
+        return None
 
     @classmethod
     def get_many(cls, **kwargs):
