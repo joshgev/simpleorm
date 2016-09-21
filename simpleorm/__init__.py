@@ -106,6 +106,9 @@ class _ModelMeta(type):
 
                 ...
 
+        Further, the method uses the name of the class being created to set a table name, used for
+        all SQL commands.
+
         """
 
         # This if aborts our special logic if no __table__ is defined on the class.
@@ -131,6 +134,7 @@ class _ModelMeta(type):
         # This dict represents the attributes that will be set on the newly created object.
         dict['_fields'] = fields
         dict['_primary'] = primary[0]
+        dict['__table__'] = name.lower()
         return super(_ModelMeta, cls).__new__(cls, name, bases, dict)
 
 
