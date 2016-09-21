@@ -267,6 +267,10 @@ class Model(object, metaclass=_ModelMeta):
         cursor.close()
         _db.commit()
 
+        # Save the new key!
+        primary = object.__getattribute__(self, '_primary')
+        self.values[primary.name] = cursor.lastrowid
+
     def delete(self):
         """
         Delete instance's corresponding row.
@@ -277,4 +281,6 @@ class Model(object, metaclass=_ModelMeta):
             column=primary.name)
         cursor = _db.cursor()
         cursor.execute(sql, [self.values[primary.name]])
+        cursor.close()
+        _db.commit()
 

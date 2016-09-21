@@ -19,7 +19,6 @@ User.create_table()
 
 user = User(id=1, name="Josh")
 user.save()
-print(User.get_one(id=1).name)
 user.delete()
 
 User.drop_table()
